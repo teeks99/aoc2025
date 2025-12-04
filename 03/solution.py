@@ -1,6 +1,8 @@
 from textwrap import wrap
 from itertools import groupby
 
+digits_to_collect = 12
+
 class Solution(object):
     def __init__(self):
         self.bankmax = []
@@ -13,27 +15,28 @@ class Solution(object):
 
     def check(self, banks):
         for bank in banks:
-            self.check_bank(bank.strip())
+            self.check_bank(bank.strip(), digits_to_collect)
 
-    def check_bank(self, bank):
-        first_max = 0
-        first_max_loc = 0
+    def check_bank(self, bank, digits):
+        combined = ""
+        last_max_loc = 0
+        for i in range(digits):
+            max = 0
+            current_max_loc = 0
 
-        start = bank[:-1]
+            trim_end = -1 * (digits - (i + 1))
+            if trim_end  == 0:
+                trim_end = None
+            
+            check_part = bank[last_max_loc:trim_end]
+            for j in range(len(check_part)):
+                if int(check_part[j]) > max:
+                    max = int(check_part[j])
+                    current_max_loc = j
 
-        for i in range(len(start)):
-            if int(start[i]) > first_max:
-                first_max = int(start[i])
-                first_max_loc = i
+            last_max_loc += current_max_loc + 1
+            combined += str(max)
 
-        remaining = bank[first_max_loc+1:]
-        second_max = 0
-
-        for c in remaining:
-            if int(c) > second_max:
-                second_max = int(c)
-
-        combined = f"{first_max}{second_max}"
         print(f"{bank} - {combined}")
         self.bankmax.append(combined)
 
@@ -52,3 +55,4 @@ if __name__ == "__main__":
         s.check(f.readlines())
 
     print(f"Sum = {s.total_jolts()}")
+    # 987654321111 + 811111111119 + 434234234278 + 888911112111 = 3121910778619
