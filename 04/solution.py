@@ -2,6 +2,7 @@ import copy
 
 class Solution(object):
     def __init__(self):
+        self.total_free_rolls = 0
         self.free_rolls = 0
         self.max_neighbors = 4
 
@@ -14,15 +15,22 @@ class Solution(object):
         self.height = len(grid)
         self.width = len(grid[0].strip())
 
-        for row in range(self.height):
-            for column in range(self.width):
-                if self.grid[row][column] == "@":
-                    neighbors = self.check_neighbors(row, column)
+        additional_found = True
+        while additional_found:
+            additional_found = False
+            for row in range(self.height):
+                for column in range(self.width):
+                    if self.grid[row][column] == "@":
+                        neighbors = self.check_neighbors(row, column)
 
-                    if neighbors < self.max_neighbors:
-                        self.free_rolls += 1
-                        str_row = self.debug_grid[row]
-                        self.debug_grid[row] = str_row[:column] + "x" + str_row[column+1:]
+                        if neighbors < self.max_neighbors:
+                            self.free_rolls += 1
+                            additional_found = True
+                            str_row = self.debug_grid[row]
+                            self.debug_grid[row] = str_row[:column] + "x" + str_row[column+1:]
+
+            self.grid = copy.deepcopy(self.debug_grid)
+
 
     def check_neighbors(self, row, column):
         checks = [ 
@@ -46,7 +54,8 @@ class Solution(object):
         elif column >= self.width:
             return False
         else:
-            if self.grid[row][column] == ".":
+            slot = self.grid[row][column]
+            if slot == "." or slot == "x":
                 return False
         return True
 
@@ -76,5 +85,5 @@ if __name__ == "__main__":
             s.check(f.readlines())
 
     print(f"Free Rolls = {s.free_rolls}")
-    for row in s.debug_grid:
-        print(row)
+    #for row in s.debug_grid:
+    #    print(row)
