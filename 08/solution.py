@@ -3,7 +3,8 @@ import math
 class Solution(object):
     def __init__(self):
         self.answer = 0
-        self.num_connections = 1000
+        #self.num_connections = 1000
+        self.num_connections = 1000000000000000
 
         self.point_ids = {}
         self.distances = {}
@@ -52,6 +53,7 @@ class Solution(object):
 
     def build_circuits(self):
         conn = 0
+        plenty_of_circuits = False
         for d, p in self.distances.items():
 
             already_in = False
@@ -83,7 +85,26 @@ class Solution(object):
                     c = {p[0], p[1]}
                     self.circuits.append(c)
 
-            self.check_dups()
+            if not plenty_of_circuits:
+                if len(self.circuits) > 4:
+                    plenty_of_circuits = True
+
+            if plenty_of_circuits and len(self.circuits) == 2:
+                pass
+
+            if plenty_of_circuits and len(self.circuits) == 1:
+                all_in = True
+                for i in self.point_ids.keys():
+                    if not i in self.circuits[0]:
+                        all_in = False
+                        print(f"Point not in circuit {i}")
+                if all_in:
+                    print(f"All in one circuit with points {p[0]} and {p[1]}")
+                    result = self.point_ids[p[0]][0] * self.point_ids[p[1]][0]
+                    print(f"Multiplied Xs: {result}")
+                    raise Exception("Done")
+
+            #self.check_dups()
 
             if not already_in:
                 conn += 1
@@ -168,7 +189,7 @@ if __name__ == "__main__":
     ]
 
     test = True
-    #test = False
+    test = False
 
     s = Solution()
     if test:
@@ -182,3 +203,4 @@ if __name__ == "__main__":
 # 2880 too low
 # 2112 must also be too low :-(
 # 8100 too low
+# 9021387100 with pts 532 and 759 too high
