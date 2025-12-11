@@ -3,6 +3,8 @@ import re
 
 class Machine(object):
     def __init__(self, line):
+        self.max_sequences = 5000
+
         self.line = line
 
         self.desired_pattern = ()
@@ -36,66 +38,79 @@ class Machine(object):
 
             # --- Parse Joltage ---
             # Split by comma and convert to integers
-            self.joltage = [int(x) for x in joltage_str.split(',')]
+            self.joltage = tuple(int(x) for x in joltage_str.split(','))
 
     def find_presses(self):
-        pattern = [False]*len(self.desired_pattern)
+        pattern = [0]*len(self.desired_pattern)
+        found_patterns = []
 
         self.presses = 1
         found = False
         sequences = []
         for b in range(len(self.buttons)):
-            sequences.append(ButtonSequence(self.desired_pattern, self.buttons, pattern, [], b))
+            sequences.append(ButtonSequence(self.joltage, self.buttons, pattern, [], b))
 
-        while not found:
+        while len(sequences) > 0:
             for s in sequences:
                 if s.check():
                     return self.presses
-            current_patterns = []
 
             s2 = []
             for s in sequences:
-                if s.int_pattern in current_patterns:
+                if s.current_pattern in found_patterns:
+                    pass
+                elif s.any_above():
                     pass
                 else:
-                    current_patterns.append(s.int_pattern)
+                    found_patterns.append(s.current_pattern)
                     s2.append(s)
 
             s3 = []
             for s in s2:
                 s3 += s.next_level()
 
-            sequences = s3
+            sequences = sorted(s3, key=lambda s: s.sum, reverse=True)
+            if len(sequences) > self.max_sequences:
+                sequences = sequences[:self.max_sequences]
 
             self.presses += 1
+        raise RuntimeError(f"Failed to find sequence with max: {self.max_sequences}")
 
 class ButtonSequence(object):
     def __init__(self, desired_pattern, buttons, current_pattern, presses, new_button):
         self.desired_pattern = desired_pattern
         self.buttons = buttons
-        self.current_pattern = current_pattern[:]
-        self.int_pattern = 0
+        self.current_pattern = current_pattern
         self.presses = presses[:]
         self.presses.append(new_button)
+        self.sum = 0
 
     def check(self):
+        cp = list(self.current_pattern)
         for w in self.buttons[self.presses[-1]]:
-            self.current_pattern[w] = not self.current_pattern[w]
+            cp[w] += 1
 
-        self.set_int_pattern()
+        self.current_pattern = tuple(cp)
+        self.create_sum()
         return self.pattern_matches(self.current_pattern)
+    
+    def any_above(self):
+        for i in range(len(self.desired_pattern)):
+            if self.current_pattern[i] > self.desired_pattern[i]:
+                return True
+        return False
+    
+    def create_sum(self):
+        self.sum = 0
+        for j in self.current_pattern:
+            self.sum += j
 
     def pattern_matches(self, pattern):
         for i in range(len(self.desired_pattern)):
             if pattern[i] != self.desired_pattern[i]:
                 return False
         return True
-    
-    def set_int_pattern(self):
-        self.int_pattern = 0
-        for bit in self.current_pattern:
-            self.int_pattern = (self.int_pattern << 1) | bit
-    
+
     def next_level(self):
         next = []
         for b in range(len(self.buttons)):
